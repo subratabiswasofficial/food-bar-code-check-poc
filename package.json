@@ -1,0 +1,27 @@
+{
+  "name": "food-bar-code-check-poc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/subratabiswasofficial/food-bar-code-check-poc.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/subratabiswasofficial/food-bar-code-check-poc/issues"
+  },
+  "homepage": "https://github.com/subratabiswasofficial/food-bar-code-check-poc#readme",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-fileupload": "^1.5.2"
+  }
+}
