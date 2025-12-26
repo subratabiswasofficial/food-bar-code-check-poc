@@ -26,23 +26,34 @@ app.post("/upload/barcode", (req, res) => {
       const jobId = Date.now();
       return res.status(200).json({ jobId });
     });
+  } else {
+    return res.status(400).json({
+      message: "file missing",
+    });
   }
-
-  return res.status(400).json({
-    message: "file missing",
-  });
 });
 
 //upload food label image
 app.post("/upload/food-label", (req, res) => {
-  if (!req.files || !req.files["food-label"]) {
+  console.log(req.files);
+  if (req.files != null && req.files.foodlabel != null) {
+    const filename = req.files.foodlabel.name;
+    req.files.foodlabel.mv("./uploads/" + filename, (err) => {
+      if (err != null) {
+        console.log(err);
+        return res.status(400).json({
+          message: "upload error",
+        });
+      }
+      console.log("case 1");
+      const jobId = Date.now();
+      return res.status(200).json({ jobId });
+    });
+  } else {
     return res.status(400).json({
-      success: false,
-      message: "Food label image is required",
+      message: "file missing",
     });
   }
-  const jobId = Date.now();
-  res.json({ jobId });
 });
 
 //job status
