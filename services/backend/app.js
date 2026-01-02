@@ -1,5 +1,6 @@
 const express = require("express");
 const fileUpload = require("express-fileupload");
+const { v4: uuidv4 } = require("uuid");
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -15,15 +16,15 @@ app.get("/", (req, res) => {
 //upload barcode image
 app.post("/upload/barcode", (req, res) => {
   if (req.files != null && req.files.barcode != null) {
-    const filename = req.files.barcode.name;
-    req.files.barcode.mv("./uploads/" + filename, (err) => {
+    const jobId = uuidv4();
+    const filename = jobId + "." + req.files.barcode.name.split(".").pop();
+    req.files.barcode.mv("./uploads/barcode/" + filename, (err) => {
       if (err != null) {
         console.log(err);
         return res.status(400).json({
           message: "upload error",
         });
       }
-      const jobId = Date.now();
       return res.status(200).json({ jobId });
     });
   } else {
@@ -37,8 +38,9 @@ app.post("/upload/barcode", (req, res) => {
 app.post("/upload/food-label", (req, res) => {
   console.log(req.files);
   if (req.files != null && req.files.foodlabel != null) {
-    const filename = req.files.foodlabel.name;
-    req.files.foodlabel.mv("./uploads/" + filename, (err) => {
+    const jobId = uuidv4();
+    const filename = jobId + "." + req.files.foodlabel.name.split(".").pop();
+    req.files.foodlabel.mv("./uploads/foodlabel/" + filename, (err) => {
       if (err != null) {
         console.log(err);
         return res.status(400).json({
@@ -46,7 +48,6 @@ app.post("/upload/food-label", (req, res) => {
         });
       }
       console.log("case 1");
-      const jobId = Date.now();
       return res.status(200).json({ jobId });
     });
   } else {
