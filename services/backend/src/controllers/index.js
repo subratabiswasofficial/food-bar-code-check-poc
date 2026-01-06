@@ -16,4 +16,26 @@ const uploadBarcode = async (req, res) => {
   }
 };
 
-module.exports = { uploadBarcode };
+
+const uploadfoodlabel = async (req, res) => {
+  try {
+    if (req.files != null && req.files.foodlabel != null) {
+      const filename = jobId + "." + req.files.foodlabel.name.split(".").pop();
+      const filepath = "./uploads/foodlabel/" + filename;
+      await req.files.foodlabel.mv(filepath);
+      return res.status(200).json({ jobId: uuidv4() });
+    }
+    return res.status(400).json({
+      message: "file missing",
+    });
+  } catch {
+      return res.status(400).json({
+      message: "upload error",
+    });
+  }
+}
+
+module.exports = { 
+    uploadBarcode,
+    uploadfoodlabel
+  };
