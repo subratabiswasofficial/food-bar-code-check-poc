@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require("uuid");
+const db = require("../config/db");
 const uploadbarcode = async (req, res) => {
   try {
     if (req.files != null && req.files.barcode != null) {
@@ -38,7 +39,18 @@ const uploadfoodlabel = async (req, res) => {
   }
 }
 
+
+const dbTest = async (req, res) => {
+  db.query("SELECT 1", (err) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ message: "MySQL connected successfully " });
+  });
+}
+
 module.exports = { 
     uploadbarcode,
-    uploadfoodlabel
+    uploadfoodlabel,
+    dbTest
   };
