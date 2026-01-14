@@ -5,13 +5,15 @@ const db = require("../config/db");
 const {
   uploadbarcode,
   uploadfoodlabel,
-  dbTest
+  dbTest,
+  analyzeFoodLabel
 } = require("../controllers");
 
 
 router.post("/upload/barcode", uploadbarcode);
 router.post("/upload/food-label", uploadfoodlabel);
 router.get("/db-test", dbTest);
+router.post("/analyze/foodlabel", analyzeFoodLabel);
 
 router.get("/job/status/:jobId", (req, res) => {
   res.json({
