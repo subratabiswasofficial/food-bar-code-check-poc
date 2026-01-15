@@ -6,15 +6,25 @@ const openai = new OpenAI({
 });
 
 async function analyzeImage(imagePath) {
-  const imageBase64 = fs.readFileSync(imagePath, "base64");
+  try {
+    const buffer = fs.readFileSync(imagePath);
+    const base64 = buffer.toString("base64");
+    const imageDataUrl = `data:image/png;base64,${base64}`;
 
-  const prompt = `
+    const response = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: `
 You are a food label analysis expert.
 
 Extract food information from the image.
 
 Return ONLY valid JSON in this format:
-
 {
   "ingredients": [],
   "nutrients": {
@@ -31,27 +41,36 @@ Return ONLY valid JSON in this format:
   "is_vegetarian": true,
   "is_vegan": false
 }
-`;
+`
+            },
+            {
+              type: "input_image",
+              image_url: imageDataUrl  
+            }
+          ]
+        }
+      ]
+    });
 
-  const response = await openai.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
-      {
-        role: "user",
-        content: [
-          { type: "input_text", text: prompt },
-          {
-            type: "input_image",
-            image_base64: imageBase64,
-          },
-        ],
-      },
-    ],
-  });
+let text = response.output_text;
 
-  const text = response.output[0].content[0].text;
+text = text
+  .replace(/```json/gi, "")
+  .replace(/```/g, "")
+  .trim();
 
-  return JSON.parse(text);
+if (!text || !text.startsWith("{")) {
+  throw new Error("Invalid JSON received from OpenAI");
+}
+
+return JSON.parse(text);
+
+
+
+  } catch (err) {
+    console.error("❌ OpenAI Vision Error:", err);
+    throw err;
+  }
 }
 
 module.exports = analyzeImage;
