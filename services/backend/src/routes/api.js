@@ -10,6 +10,9 @@ const {
 } = require("../controllers");
 
 
+router.use("/auth", require("./auth.routes"));
+
+
 router.post("/upload/barcode", uploadbarcode);
 router.post("/upload/food-label", uploadfoodlabel);
 router.get("/db-test", dbTest);
