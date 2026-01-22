@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require("uuid");
 const db = require("../config/db");
 const analyzeImage = require("../services/openaiVision");
+const cacheService = require("../services/cache.service");
 
 const uploadbarcode = async (req, res) => {
   try {
@@ -43,13 +44,29 @@ const uploadfoodlabel = async (req, res) => {
 
 
 const dbTest = async (req, res) => {
-  db.query("SELECT 1", (err) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    res.json({ message: "MySQL connected successfully " });
-  });
-}
+  const cacheKey = "db:test";
+
+  const cached = await cacheService.getCache(cacheKey);
+  if (cached) {
+    return res.json({
+      source: "redis",
+      ...cached,
+    });
+  }
+
+  const [rows] = await db.query("SELECT 1 AS result");
+
+  const response = {
+    success: true,
+    mysql: "connected",
+    result: rows,
+  };
+
+  await cacheService.setCache(cacheKey, response, 30);
+
+  res.json(response);
+};
+
 
 const analyzeFoodLabel = async (req, res) => {
   try {
@@ -59,13 +76,33 @@ const analyzeFoodLabel = async (req, res) => {
       return res.status(400).json({ message: "jobId required" });
     }
 
+    // 🔑 Redis cache key
+    const cacheKey = `foodlabel:${jobId}`;
+
+    // 1️⃣ Redis check
+    const cachedResult = await cacheService.getCache(cacheKey);
+    if (cachedResult) {
+      return res.json({
+        success: true,
+        jobId,
+        source: "redis",
+        data: cachedResult,
+      });
+    }
+
+    // 2️⃣ File path
     const filepath = "./uploads/foodlabel/" + jobId + ".png";
 
+    // 3️⃣ Expensive OpenAI call
     const result = await analyzeImage(filepath);
+
+    // 4️⃣ Redis me store (10 min)
+    await cacheService.setCache(cacheKey, result, 600);
 
     return res.json({
       success: true,
       jobId,
+      source: "openai",
       data: result,
     });
 
