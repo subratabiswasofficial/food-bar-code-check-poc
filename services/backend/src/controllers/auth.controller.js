@@ -48,7 +48,6 @@ exports.login = async (req, res) => {
 
     const user = users[0];
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
@@ -59,13 +58,40 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({ message: "Login successful", token });
+    // 🔐 session expiry
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    // 🔹 save session
+    await db.query(
+      "INSERT INTO user_sessions (user_id, token, expires_at) VALUES (?, ?, ?)",
+      [user.id, token, expiresAt]
+    );
+
+    res.json({
+      message: "Login successful",
+      token
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Login failed" });
   }
 };
 
-exports.logout = (req, res) => {
-  res.json({ message: "Logout successful" });
+
+exports.logout = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (token) {
+      await db.query(
+        "DELETE FROM user_sessions WHERE token = ?",
+        [token]
+      );
+    }
+
+    res.json({ message: "Logout successful" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Logout failed" });
+  }
 };

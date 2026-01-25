@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
+const sessionMiddleware = require("../middlewares/session.middleware");
 
 const {
   uploadbarcode,
@@ -24,5 +25,13 @@ router.get("/job/status/:jobId", (req, res) => {
     status: true,
   });
 });
+
+router.get("/profile", sessionMiddleware, (req, res) => {
+  res.json({
+    message: "Protected route",
+    userId: req.user.id
+  });
+});
+
 
 module.exports = router;
