@@ -1,6 +1,7 @@
 const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { deleteCache } = require("../services/cache.service");
 
 exports.register = async (req, res) => {
   try {
@@ -83,10 +84,11 @@ exports.logout = async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
 
     if (token) {
-      await db.query(
-        "DELETE FROM user_sessions WHERE token = ?",
-        [token]
-      );
+      // DB delete
+      await db.query("DELETE FROM user_sessions WHERE token = ?", [token]);
+
+      // Redis delete (via service)
+      await deleteCache(`session:${token}`);
     }
 
     res.json({ message: "Logout successful" });
@@ -95,3 +97,4 @@ exports.logout = async (req, res) => {
     res.status(500).json({ message: "Logout failed" });
   }
 };
+

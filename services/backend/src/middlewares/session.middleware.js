@@ -1,5 +1,10 @@
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
+const {
+  getCache,
+  setCache,
+  deleteCache
+} = require("../services/cache.service");
 
 module.exports = async (req, res, next) => {
   try {
@@ -16,15 +21,21 @@ module.exports = async (req, res, next) => {
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
-      // token invalid / expired → DB se hatao
-      await db.query(
-        "DELETE FROM user_sessions WHERE token = ?",
-        [token]
-      );
+      // ❌ JWT expired → DB + Redis delete
+      await db.query("DELETE FROM user_sessions WHERE token = ?", [token]);
+      await deleteCache(`session:${token}`);
       return res.status(401).json({ message: "Session expired" });
     }
 
-    // 🔹 DB session check
+    // 🔹 1️⃣ Redis check
+    const cachedSession = await getCache(`session:${token}`);
+    if (cachedSession) {
+      req.session = cachedSession;
+      req.user = { id: decoded.userId };
+      return next();
+    }
+
+    // 🔹 2️⃣ DB check
     const [sessions] = await db.query(
       "SELECT * FROM user_sessions WHERE token = ? AND user_id = ?",
       [token, decoded.userId]
@@ -34,9 +45,19 @@ module.exports = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid session" });
     }
 
-    // 🔹 user attach
+    const session = sessions[0];
+
+    // 🔹 3️⃣ Redis save
+    const ttl = Math.floor(
+      (new Date(session.expires_at).getTime() - Date.now()) / 1000
+    );
+
+    if (ttl > 0) {
+      await setCache(`session:${token}`, session, ttl);
+    }
+
     req.user = { id: decoded.userId };
-    req.session = sessions[0];
+    req.session = session;
 
     next();
   } catch (err) {
