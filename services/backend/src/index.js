@@ -4,18 +4,28 @@ const dotenv = require("dotenv");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
+const cors = require("cors"); 
 
 dotenv.config();
 const app = express();
 
+app.use(
+  cors({
+    origin: ["http://localhost:5173"], 
+    credentials: true
+  })
+);
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(fileUpload());
 
 const apiRoutes = require("./routes/api");
 app.use("/api", apiRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Hello, World!");
+  res.send("API Running Securely");
 });
 
 

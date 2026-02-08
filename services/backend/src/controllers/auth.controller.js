@@ -5,6 +5,7 @@ const { deleteCache } = require("../services/cache.service");
 
 exports.register = async (req, res) => {
   try {
+    console.log("BODY:", req.body);
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
@@ -15,12 +16,14 @@ exports.register = async (req, res) => {
       "SELECT id FROM users WHERE email = ?",
       [email]
     );
+    console.log("STEP 2: DB RESULT", existing);
 
     if (existing.length > 0) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("STEP 3: HASHED");
 
     await db.query(
       "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
@@ -30,6 +33,7 @@ exports.register = async (req, res) => {
     res.json({ message: "User registered successfully" });
   } catch (err) {
     console.error(err);
+    console.error(" REGISTER ERROR:", err.message);
     res.status(500).json({ message: "Register failed" });
   }
 };
