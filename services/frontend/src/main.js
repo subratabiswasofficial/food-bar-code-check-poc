@@ -1,6 +1,6 @@
 import "./style.css";
 
-const API_BASE = "https://localhost:3000/api/auth";
+const API_BASE = "http://localhost:3000/api/auth";
 
 $(document).ready(function () {
   
