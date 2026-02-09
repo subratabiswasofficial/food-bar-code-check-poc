@@ -96,6 +96,8 @@ $(document).ready(function () {
 
         alert("✅ Login successful");
         $("#overlay").addClass("hidden");
+
+        window.location.href = "home.html";
       },
 
       error: function (xhr) {
