@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 $(document).ready(function () {
 
   const token = localStorage.getItem("token");
@@ -21,8 +23,7 @@ $(document).ready(function () {
     if (barcode) formData.append("barcode", barcode);
     if (file) formData.append("foodlabel", file);
 
-    // 🔵 STEP 1: Upload
-    $.ajax({
+    ajax({
       url: "http://localhost:3000/api/upload/food-label",
       type: "POST",
       data: formData,
@@ -33,11 +34,7 @@ $(document).ready(function () {
       },
 
       success: function (res) {
-        const jobId = res.jobId;
-        alert("Upload successful. Job ID: " + jobId);
-
-        // 🔵 STEP 2: Analyze using jobId
-        analyzeFood(jobId);
+        analyzeFood(res.jobId);
       },
 
       error: function () {
@@ -46,13 +43,11 @@ $(document).ready(function () {
     });
   });
 
-  // 🔥 ANALYZE FUNCTION
   function analyzeFood(jobId) {
 
-    $("#ingredientsText").text("Analyzing food label, please wait...");
     $("#result").removeClass("hidden");
 
-    $.ajax({
+    ajax({
       url: "http://localhost:3000/api/analyze/foodlabel",
       type: "POST",
       contentType: "application/json",
@@ -62,21 +57,59 @@ $(document).ready(function () {
       },
 
       success: function (res) {
-        /*
-          res.data → OpenAI / OCR output
-          Adjust according to your analyzeImage response
-        */
+        const data = res.data;
+        if (!data) return;
 
-        const ingredients =
-          res.data.ingredients ||
-          res.data.text ||
-          JSON.stringify(res.data);
+        /* ========= INGREDIENTS ========= */
+        $("#ingredientsList").empty();
+        (data.ingredients || []).forEach(i =>
+          $("#ingredientsList").append(`<li>${i}</li>`)
+        );
 
-        $("#ingredientsText").text(ingredients);
+        /* ========= NUTRITION ========= */
+        $("#nutritionTable").empty();
+        if (data.nutrients) {
+          for (const key in data.nutrients) {
+            $("#nutritionTable").append(`
+              <div class="font-medium capitalize">${key.replace("_", " ")}</div>
+              <div>${data.nutrients[key]}</div>
+            `);
+          }
+        }
+
+        /* ========= ALLERGENS ========= */
+        if (data.allergens && data.allergens.length > 0) {
+          $("#allergenBox").removeClass("hidden");
+          $("#allergenList").empty();
+          data.allergens.forEach(a =>
+            $("#allergenList").append(`<li>${a}</li>`)
+          );
+        } else {
+          $("#allergenBox").addClass("hidden");
+        }
+
+        /* ========= VEG / VEGAN ========= */
+        $("#vegBadges").empty();
+
+        if (data.is_vegetarian) {
+          $("#vegBadges").append(`
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full">
+              🌱 Vegetarian
+            </span>
+          `);
+        }
+
+        if (data.is_vegan) {
+          $("#vegBadges").append(`
+            <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full">
+              🥬 Vegan
+            </span>
+          `);
+        }
       },
 
       error: function () {
-        $("#ingredientsText").text("❌ Analysis failed");
+        alert("❌ Analysis failed");
       }
     });
   }

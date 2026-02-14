@@ -1,3 +1,4 @@
+import $ from "jquery";
 import "./style.css";
 
 const API_BASE = "http://localhost:3000/api/auth";
