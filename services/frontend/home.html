@@ -1,88 +1,296 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Food Barcode Checker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodScan — Ingredient Analyzer</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg:      '#0f1117',
+            card:    '#181c27',
+            card2:   '#1e2335',
+            line:    '#2a2f42',
+            linel:   '#363c54',
+            accent:  '#6C8EEF',
+            accentl: '#89a4f5',
+            good:    '#4ade80',
+            warn:    '#facc15',
+            danger:  '#f87171',
+            muted:   '#7c84a0',
+            faint:   '#3a3f56',
+            txt:     '#e8eaf6',
+          },
+          fontFamily: {
+            clash: ['"Clash Display"', 'sans-serif'],
+            syne:  ['"Syne"', 'sans-serif'],
+            mono:  ['"DM Mono"', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
 
-  <body class="min-h-screen bg-gray-100 flex items-center justify-center">
-    <div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-8">
-      <h1 class="text-2xl font-bold text-center mb-6">
-        🍱 Food Barcode Checker
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Syne:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Syne', sans-serif; background: #0f1117; color: #e8eaf6; }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% 0%, rgba(108,142,239,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 100%, rgba(74,222,128,0.05) 0%, transparent 60%);
+    }
+
+    .shimmer-top::before {
+      content: '';
+      position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(108,142,239,0.5), transparent);
+    }
+
+    .drop-zone { transition: border-color .2s, background .2s; }
+    .drop-zone:hover { border-color: #6C8EEF; background: rgba(108,142,239,0.06); }
+    .drop-zone.drag-over { border-color: #89a4f5; background: rgba(108,142,239,0.1); }
+
+    .ing-chip {
+      transition: all .15s;
+      background: rgba(108,142,239,0.08);
+      border: 1px solid rgba(108,142,239,0.2);
+      color: #c5cef5;
+    }
+    .ing-chip:hover { background: rgba(108,142,239,0.18); border-color: #6C8EEF; color: #e8eaf6; }
+    .ing-chip.allergen {
+      background: rgba(248,113,113,0.1);
+      border-color: rgba(248,113,113,0.3);
+      color: #f87171;
+    }
+
+    .ng { width:42px; height:42px; border-radius:10px; display:grid; place-items:center;
+          font-family:'Clash Display',sans-serif; font-weight:700; font-size:1rem;
+          opacity:.25; transition: opacity .25s, transform .25s; }
+    .ng.active { opacity:1; transform:scale(1.18); box-shadow: 0 0 0 3px rgba(255,255,255,0.1); }
+    .ng-a{background:#16a34a;color:#fff} .ng-b{background:#65a30d;color:#fff}
+    .ng-c{background:#ca8a04;color:#fff} .ng-d{background:#ea580c;color:#fff}
+    .ng-e{background:#dc2626;color:#fff}
+
+    .stat-card { background: #1e2335; border: 1px solid #2a2f42; border-radius: 14px; padding: 16px 14px; text-align: center; transition: border-color .2s; }
+    .stat-card:hover { border-color: #363c54; }
+
+    .ring { width:48px; height:48px; border:3px solid #2a2f42; border-top-color:#6C8EEF; border-radius:50%; animation:spin .75s linear infinite; }
+
+    .btn-primary { background: linear-gradient(135deg, #6C8EEF, #5b7de8); transition: all .2s; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(108,142,239,0.25); }
+    .btn-primary:active { transform: translateY(0); box-shadow: none; }
+
+    .inp:focus { outline: none; border-color: #6C8EEF; box-shadow: 0 0 0 3px rgba(108,142,239,0.15); }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f1117; }
+    ::-webkit-scrollbar-thumb { background: #2a2f42; border-radius: 99px; }
+
+    @keyframes spin     { to { transform: rotate(360deg); } }
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeDown { from { opacity:0; transform:translateY(-14px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes blink    { 0%,100% { opacity:1; } 50% { opacity:0; } }
+    @keyframes pulse    { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+
+    .anim-down { animation: fadeDown .4s ease both; }
+    .anim-up   { animation: fadeUp  .4s ease both; }
+
+    #img-preview-box { display: none; }
+
+    .tag-gray   { background:rgba(124,132,160,.12); color:#7c84a0; border:1px solid rgba(124,132,160,.2); }
+    .tag-green  { background:rgba(74,222,128,.10);  color:#4ade80; border:1px solid rgba(74,222,128,.25); }
+    .tag-yellow { background:rgba(250,204,21,.10);  color:#facc15; border:1px solid rgba(250,204,21,.25); }
+    .tag-red    { background:rgba(248,113,113,.10); color:#f87171; border:1px solid rgba(248,113,113,.25); }
+    .tag-blue   { background:rgba(108,142,239,.12); color:#89a4f5; border:1px solid rgba(108,142,239,.25); }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+</head>
+
+<body class="min-h-screen overflow-x-hidden relative">
+
+<div class="max-w-[820px] mx-auto px-5 pb-20 relative z-10">
+
+  <!-- ── Header ── -->
+  <header class="pt-12 pb-8 anim-down" style="display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-2 font-mono text-xs tracking-widest"
+        style="background:rgba(108,142,239,0.1);border:1px solid rgba(108,142,239,0.25);color:#89a4f5">
+        <span class="w-1.5 h-1.5 rounded-full bg-accentl inline-block" style="animation:pulse 2s ease infinite"></span>
+        FOOD SCAN
+      </div>
+      <h1 class="font-clash font-bold leading-tight" style="font-size:clamp(1.5rem,4vw,2.2rem)">
+        Know what's
+        <span style="background:linear-gradient(135deg,#6C8EEF,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+          in your food
+        </span>
       </h1>
+    </div>
+    <button id="logout"
+      class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-mono transition-all flex-shrink-0"
+      style="background:#1e2335;border:1px solid #2a2f42;color:#7c84a0"
+      onmouseover="this.style.borderColor='#f87171';this.style.color='#f87171'"
+      onmouseout="this.style.borderColor='#2a2f42';this.style.color='#7c84a0'">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+      </svg>
+      Logout
+    </button>
+  </header>
 
-      <!-- Barcode Input -->
-      <div class="mb-4">
-        <label class="block text-sm font-semibold mb-1">
-          Food Barcode Number
-        </label>
-        <input
-          id="barcode"
-          type="text"
-          placeholder="Enter barcode number"
-          class="w-full px-4 py-2 border rounded-lg"
-        />
+  <!-- ── Input Card ── -->
+  <div class="anim-up relative overflow-hidden rounded-2xl mb-5 shimmer-top"
+    style="background:#181c27;border:1px solid #2a2f42;padding:26px">
+
+    <!-- Barcode input -->
+    <div class="mb-5">
+      <label class="block font-mono text-[0.67rem] tracking-widest mb-1.5" style="color:#6C8EEF">BARCODE NUMBER</label>
+      <div class="relative">
+        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 select-none" style="color:#7c84a0;font-size:17px">▦</span>
+        <input id="barcode" type="text" placeholder="e.g. 3017620422003"
+          maxlength="20" inputmode="numeric"
+          class="inp w-full rounded-xl pl-10 pr-4 py-3 font-mono text-[0.92rem] tracking-wide transition-all"
+          style="background:#0f1117;border:1px solid #2a2f42;color:#e8eaf6" />
       </div>
-
-      <!-- Label Upload -->
-      <div class="mb-4">
-        <label class="block text-sm font-semibold mb-1">
-          Upload Food Label Image
-        </label>
-        <input id="labelImage" type="file" accept="image/*" class="w-full" />
-      </div>
-
-      <!-- Submit -->
-      <button
-        id="checkFood"
-        class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
-      >
-        Check Ingredients
-      </button>
-
-      <!-- Result -->
-      <div id="result" class="mt-6 hidden">
-        <!-- Veg / Vegan Badges -->
-        <div class="flex gap-2 mb-3" id="vegBadges"></div>
-
-        <!-- Ingredients -->
-        <div class="mb-4">
-          <h2 class="font-semibold text-lg mb-1">Ingredients</h2>
-          <ul
-            id="ingredientsList"
-            class="list-disc list-inside text-gray-700"
-          ></ul>
-        </div>
-
-        <!-- Nutrition -->
-        <div class="mb-4">
-          <h2 class="font-semibold text-lg mb-1">Nutrition Information</h2>
-          <div id="nutritionTable" class="grid grid-cols-2 gap-2 text-sm"></div>
-        </div>
-
-        <!-- Allergens -->
-        <div
-          id="allergenBox"
-          class="hidden bg-red-50 border border-red-300 p-3 rounded-lg"
-        >
-          <h2 class="font-semibold text-red-600 mb-1">⚠ Allergens</h2>
-          <ul
-            id="allergenList"
-            class="list-disc list-inside text-red-600 text-sm"
-          ></ul>
-        </div>
-      </div>
-
-      <!-- Logout -->
-      <button id="logout" class="mt-6 text-sm text-red-500 block mx-auto">
-        Logout
-      </button>
     </div>
 
-    
-    <script src="/src/home.js"></script>
-  </body>
+    <!-- Divider -->
+    <div class="flex items-center gap-3 my-4 font-mono text-[0.7rem]" style="color:#3a3f56">
+      <span class="flex-1 h-px" style="background:#2a2f42"></span>
+      or upload a food label image
+      <span class="flex-1 h-px" style="background:#2a2f42"></span>
+    </div>
+
+    <!-- Image upload -->
+    <div class="mb-5">
+      <label class="block font-mono text-[0.67rem] tracking-widest mb-1.5" style="color:#6C8EEF">FOOD LABEL IMAGE</label>
+      <label for="labelImage" id="drop-zone"
+        class="drop-zone flex flex-col items-center justify-center gap-2.5 cursor-pointer rounded-xl py-7"
+        style="border:2px dashed #2a2f42;background:#0f1117">
+        <svg width="34" height="34" fill="none" viewBox="0 0 24 24" stroke="#6C8EEF" stroke-width="1.4" opacity=".65">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+        </svg>
+        <span id="file-label" class="font-mono text-sm" style="color:#7c84a0">Click to choose image or drag &amp; drop</span>
+        <span class="font-mono text-xs" style="color:#3a3f56">JPG · PNG · WEBP</span>
+        <input id="labelImage" type="file" accept="image/*" class="hidden" />
+      </label>
+
+      <div id="img-preview-box" class="mt-3 relative rounded-xl overflow-hidden" style="border:1px solid #2a2f42">
+        <img id="img-preview" src="" alt="preview" class="w-full max-h-56 object-contain" style="background:#0f1117" />
+        <button id="btn-clear-img"
+          class="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-sm transition-all"
+          style="background:#1e2335;border:1px solid #2a2f42;color:#7c84a0"
+          onmouseover="this.style.borderColor='#f87171';this.style.color='#f87171'"
+          onmouseout="this.style.borderColor='#2a2f42';this.style.color='#7c84a0'">✕</button>
+      </div>
+    </div>
+
+    <!-- Analyze button -->
+    <button id="checkFood"
+      class="btn-primary w-full flex items-center justify-center gap-2 rounded-xl py-3.5 font-semibold text-white text-[0.93rem]">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"/>
+      </svg>
+      Check Ingredients
+    </button>
+
+    <!-- Error -->
+    <div id="error-card" class="hidden mt-4 rounded-xl px-4 py-3 flex items-center gap-3 text-sm"
+      style="background:rgba(248,113,113,0.09);border:1px solid rgba(248,113,113,0.25);color:#f87171">
+      <span>⚠</span>
+      <span id="error-msg">Something went wrong.</span>
+    </div>
+  </div>
+
+  <!-- ── Loader ── -->
+  <div id="loader" class="hidden flex-col items-center gap-4 py-16 text-center">
+    <div class="ring"></div>
+    <p class="font-mono text-sm" style="color:#7c84a0">
+      Analyzing<span style="color:#6C8EEF;animation:blink 1s ease infinite">_</span>
+    </p>
+  </div>
+
+  <!-- ── Results ── -->
+  <div id="result" class="hidden anim-up">
+
+    <!-- Product Hero -->
+    <div class="relative overflow-hidden rounded-2xl mb-4 shimmer-top"
+      style="background:#181c27;border:1px solid #2a2f42;padding:20px;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center">
+      <div class="rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0"
+        style="width:84px;height:84px;background:#1e2335;border:1px solid #2a2f42">
+        <img id="product-img" src="" alt="" class="w-full h-full object-contain hidden" />
+        <span id="no-img" style="font-size:2.1rem;opacity:.4">🥫</span>
+      </div>
+      <div>
+        <div id="product-name" class="font-clash font-bold text-xl leading-snug mb-1" style="color:#e8eaf6">—</div>
+        <div id="product-brand" class="text-sm mb-2" style="color:#7c84a0">—</div>
+        <div id="vegBadges" class="flex flex-wrap gap-2"></div>
+        <div id="product-tags" class="flex flex-wrap gap-1.5 mt-2"></div>
+      </div>
+    </div>
+
+    <!-- Nutri Score -->
+    <div id="nutri-section" class="hidden rounded-2xl mb-4 p-5"
+      style="background:#181c27;border:1px solid #2a2f42">
+      <div class="font-clash font-semibold flex items-center gap-2 mb-3 text-sm" style="color:#6C8EEF">🏆 Nutri-Score</div>
+      <div class="flex gap-1.5 items-center">
+        <div class="ng ng-a" id="ng-a">A</div>
+        <div class="ng ng-b" id="ng-b">B</div>
+        <div class="ng ng-c" id="ng-c">C</div>
+        <div class="ng ng-d" id="ng-d">D</div>
+        <div class="ng ng-e" id="ng-e">E</div>
+      </div>
+    </div>
+
+    <!-- Nutrition -->
+    <div id="nutritionGrid" class="mb-4" style="display:none;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:10px"></div>
+    <div id="nutritionTable" class="hidden"></div>
+
+    <!-- Ingredients -->
+    <div class="rounded-2xl mb-4 p-5" style="background:#181c27;border:1px solid #2a2f42">
+      <div class="font-clash font-semibold flex items-center gap-2 mb-3 text-sm" style="color:#6C8EEF">🧪 Ingredients</div>
+      <div id="ingredients-content"></div>
+      <ul id="ingredientsList" class="hidden"></ul>
+    </div>
+
+    <!-- Allergens -->
+    <div id="allergenBox" class="hidden rounded-2xl mb-4 p-5"
+      style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.2)">
+      <div class="font-clash font-semibold flex items-center gap-2 mb-3 text-sm" style="color:#f87171">⚠️ Allergens</div>
+      <div id="allergen-grid" class="grid gap-2" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))"></div>
+      <ul id="allergenList" class="hidden"></ul>
+    </div>
+
+    <!-- Reset -->
+    <div class="text-center mt-7">
+      <button id="btn-reset"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all"
+        style="background:#1e2335;border:1px solid #2a2f42;color:#e8eaf6"
+        onmouseover="this.style.borderColor='#363c54'"
+        onmouseout="this.style.borderColor='#2a2f42'">
+        ← Scan another product
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<footer class="text-center pb-8 relative z-10 font-mono text-xs" style="color:#3a3f56">
+  Powered by <a href="https://world.openfoodfacts.org/" target="_blank"
+    style="color:#7c84a0" onmouseover="this.style.color='#6C8EEF'" onmouseout="this.style.color='#7c84a0'">Open Food Facts</a>
+  &nbsp;·&nbsp; Backend via local API
+</footer>
+
+<script src="/src/home.js"></script>
+</body>
 </html>
