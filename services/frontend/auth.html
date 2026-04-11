@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FoodScan Auth</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<style>
+body {
+  background: radial-gradient(circle at 20% 20%, #1e293b, #020617);
+}
+.tab-active {
+  color: #60a5fa;
+  border-bottom: 2px solid #60a5fa;
+}
+.tab-inactive {
+  color: gray;
+}
+</style>
+</head>
+
+<body class="text-white flex items-center justify-center min-h-screen">
+
+<div class="w-full max-w-xl bg-gray-800 p-10 rounded-3xl shadow-2xl">
+
+  <h2 class="text-2xl font-bold text-center mb-6">FoodScan</h2>
+
+  <!-- Tabs -->
+  <div class="flex mb-6 border-b border-gray-600">
+    <button type="button" id="loginTab" class="w-1/2 pb-2 tab-active">Login</button>
+    <button type="button" id="registerTab" class="w-1/2 pb-2 tab-inactive">Register</button>
+  </div>
+
+  <!-- LOGIN -->
+  <form id="loginForm">
+    <input id="loginEmail" type="email" placeholder="Email"
+      class="w-full p-3 mb-3 rounded bg-gray-700 outline-none">
+
+    <input id="loginPassword" type="password" placeholder="Password"
+      class="w-full p-3 mb-4 rounded bg-gray-700 outline-none">
+
+    <button type="submit"
+      class="w-full bg-blue-500 py-2 rounded hover:bg-blue-600 transition">
+      Login
+    </button>
+  </form>
+
+  <!-- REGISTER -->
+  <form id="registerForm" class="hidden">
+    <input id="regName" type="text" placeholder="Name"
+      class="w-full p-3 mb-3 rounded bg-gray-700 outline-none">
+
+    <input id="regEmail" type="email" placeholder="Email"
+      class="w-full p-3 mb-3 rounded bg-gray-700 outline-none">
+
+    <input id="regPassword" type="password" placeholder="Password"
+      class="w-full p-3 mb-4 rounded bg-gray-700 outline-none">
+
+    <button type="submit"
+      class="w-full bg-purple-500 py-2 rounded hover:bg-purple-600 transition">
+      Register
+    </button>
+  </form>
+
+</div>
+
+<script src="src/main.js"></script>
+</body>
+</html>
