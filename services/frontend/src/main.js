@@ -1,121 +1,79 @@
-const API_BASE = "http://localhost:3000/api/auth";
-
-/* ─────────────────────────────────────────
-   TOAST helper
-───────────────────────────────────────── */
-function showToast(msg, type = "success") {
-  const $t = $("#toast");
-  $t.text(msg).attr("class", type).fadeIn(200);
-  setTimeout(() => $t.fadeOut(300), 3000);
-}
+console.log("JS Loaded ✅");
 
 $(document).ready(function () {
 
-  /* ── If already logged in, skip to home ── */
-  if (localStorage.getItem("token")) {
-    window.location.href = "home.html";
-    return;
-  }
+  console.log("Document Ready ✅");
 
-  /* ─────────────────────────────────────────
-     MODAL open / close
-  ───────────────────────────────────────── */
-  $("#openModal").on("click", function () {
-    $("#overlay").removeClass("hidden");
-  });
-
-  $("#closeModal").on("click", function () {
-    $("#overlay").addClass("hidden");
-  });
-
-  /* Close on backdrop click */
-  $("#overlay").on("click", function (e) {
-    if ($(e.target).is("#overlay")) {
-      $("#overlay").addClass("hidden");
-    }
-  });
-
-  /* Close on Escape key */
-  $(document).on("keydown", function (e) {
-    if (e.key === "Escape") $("#overlay").addClass("hidden");
-  });
-
-  /* ─────────────────────────────────────────
-     TABS — Login / Register
-  ───────────────────────────────────────── */
-  $("#loginForm").removeClass("hidden");
-  $("#registerForm").addClass("hidden");
-
-  $("#loginTab").on("click", function () {
+  /* LOGIN TAB */
+  $("#loginTab").click(function () {
     $("#loginForm").removeClass("hidden");
     $("#registerForm").addClass("hidden");
-    $("#loginTab").attr("class", "w-1/2 pb-3 text-sm transition-all tab-active");
-    $("#registerTab").attr("class", "w-1/2 pb-3 text-sm transition-all tab-inactive");
+
+    $("#loginTab").addClass("tab-active").removeClass("tab-inactive");
+    $("#registerTab").addClass("tab-inactive").removeClass("tab-active");
   });
 
-  $("#registerTab").on("click", function () {
+  /* REGISTER TAB */
+  $("#registerTab").click(function () {
     $("#registerForm").removeClass("hidden");
     $("#loginForm").addClass("hidden");
-    $("#registerTab").attr("class", "w-1/2 pb-3 text-sm transition-all tab-active");
-    $("#loginTab").attr("class", "w-1/2 pb-3 text-sm transition-all tab-inactive");
+
+    $("#registerTab").addClass("tab-active").removeClass("tab-inactive");
+    $("#loginTab").addClass("tab-inactive").removeClass("tab-active");
   });
 
-  /* ─────────────────────────────────────────
-     REGISTER
-  ───────────────────────────────────────── */
-  $("#registerForm").on("submit", function (e) {
+  /* REGISTER (SAVE USER) */
+  $("#registerForm").submit(function (e) {
     e.preventDefault();
 
-    const payload = {
-      name:     $("#regName").val(),
-      email:    $("#regEmail").val(),
-      password: $("#regPassword").val()
-    };
+    const name = $("#regName").val();
+    const email = $("#regEmail").val();
+    const password = $("#regPassword").val();
 
-    $.ajax({
-      url: `${API_BASE}/register`,
-      type: "POST",
-      contentType: "application/json",
-      data: JSON.stringify(payload),
-      success: function () {
-        showToast("✅ Registration successful! Please login.");
-        $("#registerForm")[0].reset();
-        $("#loginTab").trigger("click");
-      },
-      error: function (xhr) {
-        showToast(xhr.responseJSON?.message || "❌ Register failed", "error");
-      }
-    });
+    if (!name || !email || !password) {
+      alert("❌ Fill all fields");
+      return;
+    }
+
+    // 👉 Save user in localStorage
+    const user = { name, email, password };
+    localStorage.setItem("user", JSON.stringify(user));
+
+    alert("✅ Registration Successful");
+
+    $("#registerForm")[0].reset();
+    $("#loginTab").click();
   });
 
-  /* ─────────────────────────────────────────
-     LOGIN
-  ───────────────────────────────────────── */
-  $("#loginForm").on("submit", function (e) {
+  /* LOGIN (CHECK USER) */
+  $("#loginForm").submit(function (e) {
     e.preventDefault();
 
-    const payload = {
-      email:    $("#loginEmail").val(),
-      password: $("#loginPassword").val()
-    };
+    const email = $("#loginEmail").val();
+    const password = $("#loginPassword").val();
 
-    $.ajax({
-      url: `${API_BASE}/login`,
-      type: "POST",
-      contentType: "application/json",
-      data: JSON.stringify(payload),
-      success: function (res) {
-        localStorage.setItem("token", res.token);
-        showToast("✅ Login successful!");
-        setTimeout(() => {
-          $("#overlay").addClass("hidden");
-          window.location.href = "home.html";
-        }, 800);
-      },
-      error: function (xhr) {
-        showToast(xhr.responseJSON?.message || "❌ Login failed", "error");
-      }
-    });
+    if (!email || !password) {
+      alert("❌ Enter email & password");
+      return;
+    }
+
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+
+    if (!storedUser) {
+      alert("❌ No user found, please register first");
+      return;
+    }
+
+    if (email === storedUser.email && password === storedUser.password) {
+      alert("✅ Login Successful");
+
+      // 👉 mark logged in
+      localStorage.setItem("isLoggedIn", "true");
+
+      window.location.href = "home.html";
+    } else {
+      alert("❌ Invalid email or password");
+    }
   });
 
 });
