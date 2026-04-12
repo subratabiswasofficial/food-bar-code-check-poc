@@ -1,28 +1,19 @@
-console.log("JS Loaded ✅");
+const API_BASE = "http://localhost:3000/api/auth";
 
 $(document).ready(function () {
 
-  console.log("Document Ready ✅");
-
-  /* LOGIN TAB */
+  /* TAB SWITCH */
   $("#loginTab").click(function () {
     $("#loginForm").removeClass("hidden");
     $("#registerForm").addClass("hidden");
-
-    $("#loginTab").addClass("tab-active").removeClass("tab-inactive");
-    $("#registerTab").addClass("tab-inactive").removeClass("tab-active");
   });
 
-  /* REGISTER TAB */
   $("#registerTab").click(function () {
     $("#registerForm").removeClass("hidden");
     $("#loginForm").addClass("hidden");
-
-    $("#registerTab").addClass("tab-active").removeClass("tab-inactive");
-    $("#loginTab").addClass("tab-inactive").removeClass("tab-active");
   });
 
-  /* REGISTER (SAVE USER) */
+  /* ================= REGISTER ================= */
   $("#registerForm").submit(function (e) {
     e.preventDefault();
 
@@ -35,17 +26,28 @@ $(document).ready(function () {
       return;
     }
 
-    // 👉 Save user in localStorage
-    const user = { name, email, password };
-    localStorage.setItem("user", JSON.stringify(user));
+    $.ajax({
+      url: `${API_BASE}/register`,
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({ name, email, password }),
 
-    alert("✅ Registration Successful");
+      success: function (res) {
+        console.log(res);
+        alert("✅ Registered Successfully");
 
-    $("#registerForm")[0].reset();
-    $("#loginTab").click();
+        $("#registerForm")[0].reset();   // 🔥 important
+        $("#loginTab").click();
+      },
+
+      error: function (xhr) {
+        console.log(xhr);
+        alert(xhr.responseJSON?.message || "Register failed");
+      }
+    });
   });
 
-  /* LOGIN (CHECK USER) */
+  /* ================= LOGIN ================= */
   $("#loginForm").submit(function (e) {
     e.preventDefault();
 
@@ -57,23 +59,33 @@ $(document).ready(function () {
       return;
     }
 
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+    $.ajax({
+      url: `${API_BASE}/login`,
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({ email, password }),
 
-    if (!storedUser) {
-      alert("❌ No user found, please register first");
-      return;
-    }
+      success: function (res) {
+        console.log(res);
 
-    if (email === storedUser.email && password === storedUser.password) {
-      alert("✅ Login Successful");
+        const token = res.token || res.data?.token;
 
-      // 👉 mark logged in
-      localStorage.setItem("isLoggedIn", "true");
+        if (!token) {
+          alert("⚠️ Token not found");
+          return;
+        }
 
-      window.location.href = "home.html";
-    } else {
-      alert("❌ Invalid email or password");
-    }
+        localStorage.setItem("token", token);
+
+        alert("✅ Login Successful");
+        window.location.href = "home.html";
+      },
+
+      error: function (xhr) {
+        console.log(xhr);
+        alert(xhr.responseJSON?.message || "Login failed");
+      }
+    });
   });
 
 });
