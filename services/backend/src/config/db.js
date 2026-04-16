@@ -4,7 +4,7 @@ const db = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "root",
-  database: "fooddb",
+  database: "food_barcode",
   port: 3307,
   waitForConnections: true,
   connectionLimit: 10,
